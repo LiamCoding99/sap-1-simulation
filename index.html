@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SAP-1 // SIMULATOR</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;600;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<!-- ── HEADER ─────────────────────────────────────────────────────────────── -->
+<div id="header">
+  <div id="logo-wrap">
+    <div id="logo">SAP-1 // <span>SIMULATOR</span></div>
+    <button class="info-header-btn" onclick="openInfoModal()" title="About this simulator">?</button>
+  </div>
+  <div class="header-sep"></div>
+
+  <div id="clock-display">
+    <div id="clock-indicator" class="off"></div>
+    <div id="hz-display">1 Hz</div>
+  </div>
+  <div class="header-sep"></div>
+
+  <div class="header-status">
+    <div id="status-led" class="status-led"></div>
+    <span id="status-text">IDLE</span>
+  </div>
+  <div class="spacer"></div>
+</div>
+
+<!-- ── MAIN 3-COLUMN ──────────────────────────────────────────────────────── -->
+<div id="main">
+
+  <!-- LEFT: Editor + Assembler + RAM ───────────────────────────────────────── -->
+  <div class="panel" id="left-panel">
+    <div class="panel-header">ASSEMBLY CODE EDITOR</div>
+    <div class="panel-section">
+      <textarea id="code-editor" spellcheck="false">LDA 14      ; A ← RAM[14] = 28
+ADD 15      ; A ← A + RAM[15] = 28 + 14 = 42
+OUT         ; OUT register ← A (display shows 42)
+HLT         ; stop the clock
+.data 14: 28 ; store 28 at address 14
+.data 15: 14 ; store 14 at address 15</textarea>
+      <select class="example-select" id="example-select">
+        <option value="">-- Load Example --</option>
+        <option value="add">1. Add Two Numbers</option>
+        <option value="sub">2. Subtract</option>
+        <option value="count">3. Count Up (loop)</option>
+        <option value="countdown">4. Count Down to Zero</option>
+        <option value="store">5. Store and Retrieve</option>
+      </select>
+      <button class="assemble-btn" onclick="assemble()">▶ ASSEMBLE &amp; LOAD</button>
+    </div>
+
+    <div class="panel-header">ASSEMBLED OUTPUT</div>
+    <div style="height:130px; overflow-y:auto; padding:8px 12px; border-bottom:1px solid var(--border);">
+      <div id="asm-output"></div>
+    </div>
+
+    <div class="panel-header">RAM — 16 × 8-BIT</div>
+    <div class="panel-scroll">
+      <div id="ram-grid"></div>
+    </div>
+  </div>
+
+  <!-- CENTER: CPU Diagram ──────────────────────────────────────────────────── -->
+  <div id="center-panel">
+    <div class="panel-header" style="background:var(--panel); border-bottom:1px solid var(--border);">
+      CPU ARCHITECTURE — SAP-1 (BEN EATER)
+    </div>
+
+    <div id="cpu-diagram">
+      <div id="bus-val-display">BUS: 00000000 | 0x00</div>
+      <svg id="bus-svg" xmlns="http://www.w3.org/2000/svg"></svg>
+
+      <!-- Row 1: FETCH — PC · MAR · RAM[MAR] -->
+      <div class="reg-box" id="r-pc">
+        <div class="reg-label">PC — PROGRAM COUNTER</div>
+        <div class="reg-val-bin" id="v-pc-bin">0000</div>
+        <div class="reg-val-hex" id="v-pc-hex">0x0</div>
+      </div>
+      <div class="reg-box" id="r-mar">
+        <div class="reg-label">MAR — MEM ADDR REG</div>
+        <div class="reg-val-bin" id="v-mar-bin">0000</div>
+        <div class="reg-val-hex" id="v-mar-hex">0x0</div>
+      </div>
+      <div class="reg-box" id="r-ram">
+        <div class="reg-label">RAM [ MAR ]</div>
+        <div class="reg-val-bin" id="v-ram-bin">00000000</div>
+        <div class="reg-val-hex" id="v-ram-hex">0x00</div>
+      </div>
+
+      <!-- Row 2: DECODE — IR · Control Logic · FLAGS -->
+      <div class="reg-box" id="r-ir">
+        <div class="reg-label">IR — INSTRUCTION REG</div>
+        <div class="reg-val-bin" id="v-ir-bin">00000000</div>
+        <div style="display:flex;gap:8px;">
+          <div class="reg-val-hex" id="v-ir-hex">0x00</div>
+          <div class="reg-val-dec" id="v-ir-mnem" style="color:var(--amber);">NOP</div>
+        </div>
+      </div>
+      <div class="reg-box" id="r-ctrl">
+        <div class="reg-label">CONTROL LOGIC</div>
+        <div id="v-ctrl-signals" style="font-size:11px;color:var(--cyan);letter-spacing:1px;">CO|MI</div>
+      </div>
+      <div class="flags-display">
+        <div class="reg-label">FLAGS</div>
+        <div class="flag-item">
+          <span class="flag-name">ZERO</span>
+          <span class="flag-val" id="f-zero">0</span>
+        </div>
+        <div class="flag-item">
+          <span class="flag-name">CARRY</span>
+          <span class="flag-val" id="f-carry">0</span>
+        </div>
+      </div>
+
+      <!-- Row 3: EXECUTE — A · ALU · B -->
+      <div class="reg-box" id="r-a">
+        <div class="reg-label">A — ACCUMULATOR</div>
+        <div class="reg-val-bin" id="v-a-bin">00000000</div>
+        <div style="display:flex;gap:8px;">
+          <div class="reg-val-hex" id="v-a-hex">0x00</div>
+          <div class="reg-val-dec" id="v-a-dec">0</div>
+        </div>
+      </div>
+      <div class="reg-box" id="r-alu">
+        <div class="reg-label">ALU</div>
+        <div class="reg-val-bin" id="v-alu-bin">00000000</div>
+        <div class="reg-val-hex" id="v-alu-hex">0x00</div>
+      </div>
+      <div class="reg-box" id="r-b">
+        <div class="reg-label">B REGISTER</div>
+        <div class="reg-val-bin" id="v-b-bin">00000000</div>
+        <div class="reg-val-hex" id="v-b-hex">0x00</div>
+      </div>
+
+      <!-- Row 4: OUTPUT — centred in middle column -->
+      <div class="cpu-empty"></div>
+      <div class="reg-box" id="r-out">
+        <div class="reg-label">OUT REGISTER</div>
+        <div class="reg-val-bin" id="v-out-bin">00000000</div>
+        <div style="display:flex;gap:8px;">
+          <div class="reg-val-hex" id="v-out-hex">0x00</div>
+          <div class="reg-val-dec" id="v-out-dec">0</div>
+        </div>
+      </div>
+      <div class="cpu-empty"></div>
+
+      <div id="pc-cycle-display">CYCLES: <span id="v-cycles">0</span> | PHASE: <span id="v-phase">IDLE</span></div>
+    </div>
+
+    <!-- Output Display -->
+    <div id="out-display-wrap" style="border-top:1px solid var(--border); padding:8px 14px; display:flex; align-items:center; gap:16px;">
+      <div>
+        <div class="out-label">OUTPUT DISPLAY</div>
+        <div id="seven-seg">000</div>
+      </div>
+      <div>
+        <div class="out-label">8-BIT OUT</div>
+        <div id="out-leds"></div>
+      </div>
+    </div>
+
+    <!-- Control signals LED panel -->
+    <div id="ctrl-signals"></div>
+  </div>
+
+  <!-- RIGHT: Execution Log ─────────────────────────────────────────────────── -->
+  <div class="panel" id="right-panel" style="border-left:1px solid var(--border); border-right:none;">
+    <div class="panel-header">EXECUTION LOG</div>
+
+    <!-- T-state indicator row -->
+    <div id="tstates" style="flex-shrink:0;"></div>
+
+    <!-- Scrolling log -->
+    <div id="exec-log" style="flex:1; overflow-y:auto;"></div>
+  </div>
+
+</div><!-- /#main -->
+
+<!-- ── BOTTOM BAR ─────────────────────────────────────────────────────────── -->
+<div id="bottom">
+  <button class="ctrl-btn" onclick="stepOne()">STEP</button>
+  <button class="ctrl-btn" id="run-btn" onclick="toggleRun()">RUN</button>
+  <button class="ctrl-btn danger" onclick="resetCPU()">RESET</button>
+
+  <div class="header-sep"></div>
+
+  <div id="speed-wrap">
+    <span id="speed-label">SPEED</span>
+    <input type="range" id="speed-slider" min="0" max="7" value="1" oninput="updateSpeed(this.value)">
+    <span id="hz-display-bottom">1 Hz</span>
+  </div>
+
+  <div class="bottom-info">
+    <div><span class="lbl">T-STATES </span><span class="val" id="b-cycles">0</span></div>
+    <div><span class="lbl">INSTRS </span><span class="val" id="b-instrs-done">0</span></div>
+  </div>
+  <div class="bottom-info">
+    <div><span class="lbl">T-STATE </span><span class="val" id="b-tstate">—</span></div>
+    <div><span class="lbl">PHASE </span><span class="val" id="b-phase">IDLE</span></div>
+  </div>
+  <div class="bottom-sep"></div>
+  <div class="bottom-info">
+    <div><span class="lbl">ELAPSED </span><span class="val" id="b-elapsed">—</span></div>
+    <div><span class="lbl">CLK PERIOD </span><span class="val" id="b-period">1000 ms</span></div>
+  </div>
+  <div class="bottom-info">
+    <div><span class="lbl">THROUGHPUT </span><span class="val" id="b-throughput">—</span></div>
+    <div><span class="lbl">CURR INSTR </span><span class="val" id="b-instr">—</span></div>
+  </div>
+</div>
+
+<!-- ── INFO MODAL ──────────────────────────────────────────────────────────── -->
+<div id="info-modal-backdrop" onclick="closeInfoModal(event)">
+  <div id="info-modal">
+    <button id="info-modal-close" onclick="closeInfoModal()">✕</button>
+
+    <div class="modal-title">SAP-1 SIMULATOR — ABOUT</div>
+
+    <div class="modal-section">
+      <div class="modal-section-title">WHAT IS SAP-1?</div>
+      <p><strong>SAP</strong> stands for <strong>Simple As Possible</strong>. The SAP-1 is an 8-bit educational CPU architecture designed by Albert Paul Malvino and Jerald A. Brown in their textbook <em>Digital Computer Electronics</em> (1977). It is not a commercial chip — it was purpose-built to teach how a CPU works at the gate level, starting from nothing.</p>
+    </div>
+
+    <div class="modal-section">
+      <div class="modal-section-title">INSPIRED BY BEN EATER</div>
+      <p>Ben Eater built a physical SAP-1 on breadboards using 74HC-series logic chips and documented the entire build on YouTube. His series became one of the most accessible explanations of computer architecture ever made — showing exactly how flip-flops, adders, decoders, and buses combine into a working CPU you can hold in your hand.</p>
+    </div>
+
+    <div class="modal-section">
+      <div class="modal-section-title">WHAT DOES THIS SIMULATOR DO?</div>
+      <p>This simulator replicates the SAP-1 in software. It executes assembly code cycle-by-cycle, showing exactly what happens inside the CPU at every T-state: which registers change, which control signals fire, and what data is on the bus.</p>
+      <ul>
+        <li>8-bit data path, 4-bit addresses, 16 bytes of RAM</li>
+        <li>6 T-states per instruction (FETCH + EXECUTE)</li>
+        <li>9-instruction ISA: LDA, ADD, SUB, STA, LDI, JMP, JC, JZ, OUT, HLT</li>
+        <li>Zero and Carry flags for conditional branching</li>
+      </ul>
+    </div>
+
+    <div class="modal-section">
+      <div class="modal-section-title">HOW TO USE</div>
+      <ul>
+        <li>Write assembly in the editor, or pick an example from the dropdown</li>
+        <li>Click <strong>ASSEMBLE &amp; LOAD</strong> to compile into RAM</li>
+        <li>Use <strong>STEP</strong> to advance one clock cycle at a time</li>
+        <li>Use <strong>RUN</strong> to let it execute automatically</li>
+        <li>Adjust speed with the slider (0.5 Hz → 64 Hz)</li>
+        <li>Click any RAM cell to edit its value directly</li>
+        <li>Comments after <strong>;</strong> are ignored by the assembler</li>
+      </ul>
+    </div>
+
+    <div class="modal-section">
+      <div class="modal-section-title">INSTRUCTION SET</div>
+      <table class="modal-cost-table">
+        <tr><td>LDA n</td><td>A ← RAM[n]</td></tr>
+        <tr><td>ADD n</td><td>A ← A + RAM[n]  (sets Zero, Carry flags)</td></tr>
+        <tr><td>SUB n</td><td>A ← A − RAM[n]  (sets Zero, Carry flags)</td></tr>
+        <tr><td>STA n</td><td>RAM[n] ← A</td></tr>
+        <tr><td>LDI n</td><td>A ← n  (immediate, 4-bit value 0–15)</td></tr>
+        <tr><td>JMP n</td><td>PC ← n  (unconditional jump)</td></tr>
+        <tr><td>JC n</td><td>if Carry=1: PC ← n</td></tr>
+        <tr><td>JZ n</td><td>if Zero=1: PC ← n</td></tr>
+        <tr><td>OUT</td><td>OUT register ← A  (updates display)</td></tr>
+        <tr><td>HLT</td><td>halt the clock</td></tr>
+      </table>
+    </div>
+
+  </div>
+</div>
+
+<script src="js/cpu.js"></script>
+<script src="js/assembler.js"></script>
+<script src="js/ui.js"></script>
+</body>
+</html>
