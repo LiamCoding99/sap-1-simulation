@@ -39,12 +39,13 @@ const EXAMPLES = {
   ].join('\n'),
 
   store: [
-    'LDI 42      ; A ← 42  (load immediate value)',
+    'LDA 14      ; A ← RAM[14] = 42  (load value to store)',
     'STA 15      ; RAM[15] ← A  (save 42 to memory)',
     'LDI 0       ; A ← 0  (clear the accumulator)',
     'LDA 15      ; A ← RAM[15] = 42  (reload from memory)',
     'OUT         ; OUT ← A  (display shows 42)',
     'HLT         ; stop the clock',
+    '.data 14: 42 ; the value 42 we want to store and retrieve',
   ].join('\n'),
 };
 

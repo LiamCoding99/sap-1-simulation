@@ -247,6 +247,25 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Escape') closeInfoModal();
 });
 
+// ─── SYNTAX HIGHLIGHT ────────────────────────────────────────────────────────
+function highlightCode(text) {
+  return text.split('\n').map(line => {
+    const semi = line.indexOf(';');
+    if (semi === -1) return escapeHtml(line);
+    return escapeHtml(line.slice(0, semi)) +
+           '<span class="comment">' + escapeHtml(line.slice(semi)) + '</span>';
+  }).join('\n');
+}
+
+function syncHighlight() {
+  const editor    = document.getElementById('code-editor');
+  const highlight = document.getElementById('code-highlight');
+  if (!editor || !highlight) return;
+  highlight.innerHTML = highlightCode(editor.value) + '\n';
+  highlight.scrollTop  = editor.scrollTop;
+  highlight.scrollLeft = editor.scrollLeft;
+}
+
 // ─── INIT ────────────────────────────────────────────────────────────────────
 window.onload = () => {
   buildControlSignals();
@@ -256,9 +275,15 @@ window.onload = () => {
   setTimeout(drawBusLines, 100);
   updateStatus('idle');
 
+  const editor = document.getElementById('code-editor');
+  editor.addEventListener('input',  syncHighlight);
+  editor.addEventListener('scroll', syncHighlight);
+  syncHighlight();
+
   document.getElementById('example-select').onchange = function () {
     if (this.value && EXAMPLES[this.value]) {
-      document.getElementById('code-editor').value = EXAMPLES[this.value];
+      editor.value = EXAMPLES[this.value];
+      syncHighlight();
     }
   };
 };

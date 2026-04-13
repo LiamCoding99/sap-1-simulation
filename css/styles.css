@@ -152,7 +152,7 @@ body {
 /* ── MAIN LAYOUT ───────────────────────────────────────────────────────────── */
 #main {
   display: grid;
-  grid-template-columns: 260px 1fr 280px;
+  grid-template-columns: 320px 1fr 280px;
   height: calc(100vh - 48px - 60px);
   gap: 0;
   overflow: hidden;
@@ -260,27 +260,64 @@ body {
 .panel-scroll::-webkit-scrollbar-thumb { background: rgba(0,212,255,0.25); border-radius: 2px; }
 .panel-scroll::-webkit-scrollbar-thumb:hover { background: var(--cyan); }
 
+#asm-scroll::-webkit-scrollbar        { width: 4px; }
+#asm-scroll::-webkit-scrollbar-track  { background: transparent; }
+#asm-scroll::-webkit-scrollbar-thumb  { background: rgba(0,212,255,0.25); border-radius: 2px; }
+#asm-scroll::-webkit-scrollbar-thumb:hover { background: var(--cyan); }
+
 /* ── LEFT PANEL ────────────────────────────────────────────────────────────── */
 #left-panel { overflow: hidden; }
 
-#code-editor {
+.editor-wrap {
+  position: relative;
   width: 100%;
   height: 140px;
+}
+
+#code-highlight {
+  position: absolute;
+  inset: 0;
   background: #020408;
-  border: 1px solid var(--border);
   color: var(--green);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  padding: 8px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow: hidden;
+  pointer-events: none;
+  border: 1px solid var(--border);
+  box-sizing: border-box;
+  transition: border-color 0.15s;
+}
+.editor-wrap:focus-within #code-highlight { border-color: var(--cyan); }
+
+#code-editor {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  border: 1px solid transparent;
+  color: transparent;
+  caret-color: var(--green);
   font-family: var(--font-mono);
   font-size: 12px;
   padding: 8px;
   resize: none;
   outline: none;
   line-height: 1.5;
+  z-index: 1;
+  white-space: pre-wrap;
+  word-wrap: break-word;
 }
-#code-editor:focus { border-color: var(--cyan); }
 #code-editor::-webkit-scrollbar        { width: 4px; }
 #code-editor::-webkit-scrollbar-track  { background: transparent; }
 #code-editor::-webkit-scrollbar-thumb  { background: var(--border); border-radius: 2px; }
 #code-editor::-webkit-scrollbar-thumb:hover { background: var(--cyan); }
+
+.comment { color: var(--orange); }
 
 .example-select {
   width: 100%;

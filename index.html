@@ -38,12 +38,15 @@
   <div class="panel" id="left-panel">
     <div class="panel-header">ASSEMBLY CODE EDITOR</div>
     <div class="panel-section">
-      <textarea id="code-editor" spellcheck="false">LDA 14      ; A ← RAM[14] = 28
+      <div class="editor-wrap">
+        <div id="code-highlight" aria-hidden="true"></div>
+        <textarea id="code-editor" spellcheck="false">LDA 14      ; A ← RAM[14] = 28
 ADD 15      ; A ← A + RAM[15] = 28 + 14 = 42
 OUT         ; OUT register ← A (display shows 42)
 HLT         ; stop the clock
 .data 14: 28 ; store 28 at address 14
 .data 15: 14 ; store 14 at address 15</textarea>
+      </div>
       <select class="example-select" id="example-select">
         <option value="">-- Load Example --</option>
         <option value="add">1. Add Two Numbers</option>
@@ -56,7 +59,7 @@ HLT         ; stop the clock
     </div>
 
     <div class="panel-header">ASSEMBLED OUTPUT</div>
-    <div style="height:130px; overflow-y:auto; padding:8px 12px; border-bottom:1px solid var(--border);">
+    <div id="asm-scroll" style="height:130px; overflow-y:auto; padding:8px 12px; border-bottom:1px solid var(--border);">
       <div id="asm-output"></div>
     </div>
 
