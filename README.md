@@ -1,6 +1,6 @@
 # SAP-1 CPU Simulator
 
-> **Live Demo:** *(coming soon — Vercel link will be added here)*
+> Live Demo: https://sap-1-simulation.vercel.app/
 
 A cycle-accurate, browser-based simulator of the SAP-1 (Simple As Possible) 8-bit CPU, built entirely in vanilla HTML, CSS, and JavaScript. No frameworks. No build tools. Just open `index.html`.
 
